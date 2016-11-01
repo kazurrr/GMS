@@ -1,36 +1,37 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-//ToDo implement this http://eduinf.waw.pl/inf/alg/001_search/0141.php
+/**
+ * http://eduinf.waw.pl/inf/alg/001_search/0141.php
+ * Spanning tree
+ * Algorithm: Kruskal
+ *
+ * eg input:
+ * 2
+ * n=6,m=9
+ * {0,1}1 {0,5}3 {1,2}9 {1,3}7 {1,5}5 {2,3}8 {3,4}5 {3,5}2 {4,5}4
+ * n=7,m=12
+ * {0,1}2 {0,2}1 {0,3}2 {0,4}1 {0,5}2 {0,6}1 {1,2}4 {1,6}4 {2,3}3 {3,4}4 {4,5}6 {5,6}8
+ */
 
-public class SpanningTree {
-    public static class Vertex {
-        private int index;
-        private List<Node> nodes = new ArrayList<Node>();
+public class SpanningTree { //ToDo when posting on SPOX change class name to Main
+    public static class Vertex implements Comparable<Vertex> {
+        public int index;
 
         public Vertex(int index) {
             this.index = index;
         }
 
-        public void addNode(Vertex next, int weight) {
-            nodes.add(new Node(this, next, weight));
-        }
-
-        public List<Node> getNodes() {
-            return nodes;
-        }
-
-        public int getIndex() {
-            return index;
+        @Override
+        public int compareTo(Vertex vertex) {
+            return Double.compare(this.index, vertex.index);
         }
     }
 
     public static class Node implements Comparable<Node> {
-        private Vertex from;
-        private Vertex to;
-        private int weight;
+        public Vertex from;
+        public Vertex to;
+        public int weight;
 
         public Node(Vertex from, Vertex to, int weight) {
             this.from = from;
@@ -38,21 +39,9 @@ public class SpanningTree {
             this.weight = weight;
         }
 
-        public Vertex getTo() {
-            return to;
-        }
-
-        public Vertex getFrom() {
-            return from;
-        }
-
-        public int getWeight() {
-            return weight;
-        }
-
         @Override
         public int compareTo(Node o) {
-            return Double.compare(this.getWeight(), o.getWeight());
+            return Double.compare(this.weight, o.weight);
         }
     }
 
@@ -60,6 +49,7 @@ public class SpanningTree {
         private int numberOfVertices;
         private int numberOfNodes;
         private Vertex[] vertices;
+        private List<Node> nodes = new ArrayList<Node>();
 
         public Graph(int numberOfVertices, int numberOfNodes) {
             this.numberOfVertices = numberOfVertices;
@@ -75,15 +65,11 @@ public class SpanningTree {
         }
 
         public void addNode(int from, int to, int weight) {
-            getVertex(from).addNode(getVertex(to), weight);
+            nodes.add(new Node(getVertex(from), getVertex(to), weight));
         }
 
         public Vertex getVertex(int index) {
             return vertices[index];
-        }
-
-        private Vertex[] getVertices() {
-            return vertices;
         }
     }
 
@@ -115,67 +101,133 @@ public class SpanningTree {
         }
     }
 
-    private BufferedReader reader;
-    private Graph graph;
-    private List<Node> allNodesSorted = new ArrayList<Node>();
-    private List<Node> spanningTreeNodes = new ArrayList<Node>();
-    private List<Vertex> spanningTreeVertices = new ArrayList<Vertex>();
-    int totalMinimumWeight;
+    public static class Vertices {
+        public SortedSet<Vertex> vertices = new TreeSet<Vertex>();
 
-    public SpanningTree() throws IOException {
-//        reader = new BufferedReader(new InputStreamReader(System.in));
-        reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/Users/karol/Projekty/PG/GMS/GMS/Java/spanningTreeTest.txt"))));
-        startTests();
-    }
+        public void add(Vertex vertex) {
+            vertices.add(vertex);
+        }
 
-    private void startTests() throws IOException {
-        int howManyTests = Integer.parseInt(reader.readLine());
-        for (int i = 0; i < howManyTests; i++) {
-            String[] info = reader.readLine().split(",");
-            String data = reader.readLine();
+        public void add(Vertices vertices) {
+            this.vertices.addAll(vertices.vertices);
+        }
 
-            graph = new GraphBuilder().createGraph(info, data);
-            calculateMinimumSpanningTree();
+        public boolean contains(Vertex vertex) {
+            return vertices.contains(vertex);
         }
     }
 
-    private void calculateMinimumSpanningTree() {
-        Vertex startVertex = graph.getVertex(0);
-        getAllNodes();
-        calculateNodes();
-    }
+    public static class SpanningTreeSolution {
+        private BufferedReader reader;
+        private Graph graph;
+        private List<Node> allNodesSorted = new ArrayList<Node>();
+        private List<Node> spanningTreeNodes = new ArrayList<Node>();
+        private List<Vertices> verticesSet = new ArrayList<Vertices>();
+        private int totalMinimumWeight = 0;
 
-    private void getAllNodes() {
-        for (Vertex vertex : graph.getVertices()) {
-            for (Node node : vertex.getNodes()) {
-                allNodesSorted.add(node);
+        public SpanningTreeSolution() throws IOException {
+            reader = new BufferedReader(new InputStreamReader(System.in));
+//        reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/Users/karol/Projekty/PG/GMS/GMS/Java/spanningTreeTest.txt"))));
+            startTests();
+        }
+
+        private void startTests() throws IOException {
+            int howManyTests = Integer.parseInt(reader.readLine());
+            for (int i = 0; i < howManyTests; i++) {
+                cleanUp();
+                String[] info = reader.readLine().split(",");
+                String data = reader.readLine();
+
+                graph = new GraphBuilder().createGraph(info, data);
+                calculateMinimumSpanningTree();
             }
         }
-        Collections.sort(allNodesSorted);
-    }
 
-    private void calculateNodes() {
-        for (Node node : allNodesSorted) {
-            if (nodeCanBeAdded(node)) {
+        private void cleanUp() {
+            allNodesSorted = new ArrayList<Node>();
+            spanningTreeNodes = new ArrayList<Node>();
+            verticesSet = new ArrayList<Vertices>();
+            totalMinimumWeight = 0;
+        }
+
+        private void calculateMinimumSpanningTree() {
+            getAllNodes();
+            calculateNodes();
+            System.out.println(totalMinimumWeight);
+        }
+
+        private void getAllNodes() {
+            for (Node node : graph.nodes) {
+                allNodesSorted.add(node);
+            }
+            Collections.sort(allNodesSorted);
+        }
+
+        private void calculateNodes() {
+            for (Node node : allNodesSorted) {
                 addNodeToSpanningTree(node);
             }
         }
-    }
 
-    private boolean nodeCanBeAdded(Node node) {
-        if (spanningTreeVertices.contains(node.from) && spanningTreeNodes.contains(node.to)) {
-            return false;
+        private void addNodeToSpanningTree(Node node) {
+            if (doesNodeCreateCycle(node))
+                return;
+
+            if (getSetWithVertex(node.from) == null) {
+                if (getSetWithVertex(node.to) == null) {
+                    Vertices toAdd = new Vertices();
+                    toAdd.add(node.from);
+                    toAdd.add(node.to);
+                    verticesSet.add(toAdd);
+                    addNode(node);
+                } else {
+                    getSetWithVertex(node.to).add(node.from);
+                    addNode(node);
+                }
+            } else {
+                if (getSetWithVertex(node.to) == null) {
+                    getSetWithVertex(node.from).add(node.to);
+                    addNode(node);
+                } else {
+                    mergeTwoSets(node);
+                    addNode(node);
+                }
+            }
         }
-        return true;
+
+        private void mergeTwoSets(Node node) {
+            Vertices setFrom = getSetWithVertex(node.from);
+            Vertices setTo = getSetWithVertex(node.to);
+
+            setFrom.add(setTo);
+            verticesSet.remove(setTo);
+        }
+
+        private boolean doesNodeCreateCycle(Node node) {
+            Vertices setToCheck = getSetWithVertex(node.from);
+
+            if (setToCheck == null)
+                return false;
+
+            return setToCheck.contains(node.to);
+        }
+
+        private Vertices getSetWithVertex(Vertex vertex) {
+            for (Vertices vertices : verticesSet) {
+                if (vertices.vertices.contains(vertex))
+                    return vertices;
+            }
+            return null;
+        }
+
+        private void addNode(Node node) {
+            spanningTreeNodes.add(node);
+            totalMinimumWeight += node.weight;
+        }
     }
 
-    private void addNodeToSpanningTree(Node node) {
-        spanningTreeVertices.add(node.from);
-        spanningTreeVertices.add(node.to);
-        spanningTreeNodes.add(node);
-    }
 
     public static void main(String[] args) throws IOException {
-        new SpanningTree();
+        new SpanningTreeSolution();
     }
 }
