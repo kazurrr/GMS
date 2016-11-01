@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 //ToDo implement this http://eduinf.waw.pl/inf/alg/001_search/0141.php
@@ -14,7 +15,7 @@ public class SpanningTree {
         }
 
         public void addNode(Vertex next, int weight) {
-            nodes.add(new Node(next, weight));
+            nodes.add(new Node(this, next, weight));
         }
 
         public List<Node> getNodes() {
@@ -26,23 +27,33 @@ public class SpanningTree {
         }
     }
 
-    public static class Node {
-        private Vertex next;
+    public static class Node implements Comparable<Node> {
+        private Vertex from;
+        private Vertex to;
         private int weight;
 
-        public Node(Vertex next, int weight) {
-            this.next = next;
+        public Node(Vertex from, Vertex to, int weight) {
+            this.from = from;
+            this.to = to;
             this.weight = weight;
         }
 
-        public Vertex getNext() {
-            return next;
+        public Vertex getTo() {
+            return to;
+        }
+
+        public Vertex getFrom() {
+            return from;
         }
 
         public int getWeight() {
             return weight;
         }
 
+        @Override
+        public int compareTo(Node o) {
+            return Double.compare(this.getWeight(), o.getWeight());
+        }
     }
 
     public static class Graph {
@@ -67,8 +78,12 @@ public class SpanningTree {
             getVertex(from).addNode(getVertex(to), weight);
         }
 
-        private Vertex getVertex(int index) {
+        public Vertex getVertex(int index) {
             return vertices[index];
+        }
+
+        private Vertex[] getVertices() {
+            return vertices;
         }
     }
 
@@ -76,8 +91,8 @@ public class SpanningTree {
         private Graph graph;
 
         public Graph createGraph(String[] info, String data) {
-            int numberOfVertices = Integer.parseInt(info[0].replaceAll("\\D+",""));
-            int numberOfNodes = Integer.parseInt(info[1].replaceAll("\\D+",""));
+            int numberOfVertices = Integer.parseInt(info[0].replaceAll("\\D+", ""));
+            int numberOfNodes = Integer.parseInt(info[1].replaceAll("\\D+", ""));
 
             graph = new Graph(numberOfVertices, numberOfNodes);
             addNodes(data);
@@ -102,11 +117,14 @@ public class SpanningTree {
 
     private BufferedReader reader;
     private Graph graph;
+    private List<Node> allNodesSorted = new ArrayList<Node>();
+    private List<Node> spanningTreeNodes = new ArrayList<Node>();
+    private List<Vertex> spanningTreeVertices = new ArrayList<Vertex>();
     int totalMinimumWeight;
 
     public SpanningTree() throws IOException {
 //        reader = new BufferedReader(new InputStreamReader(System.in));
-        reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("spanningTreeTest.txt"))));
+        reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/Users/karol/Projekty/PG/GMS/GMS/Java/spanningTreeTest.txt"))));
         startTests();
     }
 
@@ -123,16 +141,38 @@ public class SpanningTree {
 
     private void calculateMinimumSpanningTree() {
         Vertex startVertex = graph.getVertex(0);
+        getAllNodes();
+        calculateNodes();
     }
 
-    private Node getBestNode(Vertex vertex) {
-        Node bestNode = null;
-        for (Node currentNode : vertex.getNodes()) {
-            if (bestNode == null || bestNode.getWeight() > currentNode.getWeight()) {
-                bestNode = currentNode;
+    private void getAllNodes() {
+        for (Vertex vertex : graph.getVertices()) {
+            for (Node node : vertex.getNodes()) {
+                allNodesSorted.add(node);
             }
         }
-        return bestNode;
+        Collections.sort(allNodesSorted);
+    }
+
+    private void calculateNodes() {
+        for (Node node : allNodesSorted) {
+            if (nodeCanBeAdded(node)) {
+                addNodeToSpanningTree(node);
+            }
+        }
+    }
+
+    private boolean nodeCanBeAdded(Node node) {
+        if (spanningTreeVertices.contains(node.from) && spanningTreeNodes.contains(node.to)) {
+            return false;
+        }
+        return true;
+    }
+
+    private void addNodeToSpanningTree(Node node) {
+        spanningTreeVertices.add(node.from);
+        spanningTreeVertices.add(node.to);
+        spanningTreeNodes.add(node);
     }
 
     public static void main(String[] args) throws IOException {
