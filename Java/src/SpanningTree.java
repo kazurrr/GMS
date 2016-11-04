@@ -1,11 +1,13 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
  * http://eduinf.waw.pl/inf/alg/001_search/0141.php
  * Spanning tree
  * Algorithm: Kruskal
- *
+ * <p>
  * eg input:
  * 2
  * n=6,m=9
@@ -225,7 +227,6 @@ public class SpanningTree { //ToDo when posting on SPOX change class name to Mai
             totalMinimumWeight += node.weight;
         }
     }
-
 
     public static void main(String[] args) throws IOException {
         new SpanningTreeSolution();

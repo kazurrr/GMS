@@ -159,7 +159,7 @@ public class TSHPATH {
 
         public GraphSolution() throws IOException {
             reader = new BufferedReader(new InputStreamReader(System.in));
-//            reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("test2.txt"))));
+//            reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("TSHPATH.txt"))));
             startTests();
         }
 
